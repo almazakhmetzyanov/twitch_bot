@@ -7,6 +7,7 @@ import config
 import logging
 from accounts_controller import AccountsController
 from twitch_client import TwitchClient
+from commands_controller import CommandsController
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         self.token = token
         self.channel = '#' + channel
         self.accounts_controller = AccountsController()
+        self.commands_controller = CommandsController()
         self.twitch_client = TwitchClient()
         self.is_duel_on = False
 
@@ -59,6 +61,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         receiver_name = e.tags[2]['value'].lower()
         # to add new command add if cmd.startswith('command'):
 
+    # TODO: Need to move all commands to another place
         # register to duels
         if cmd.startswith('reg'):
             if not self.is_duel_on:
@@ -133,13 +136,56 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
             else:
                 c.privmsg(self.channel, text='чот не получилось игру установить сори FeelsBadMan')
 
-        if cmd.startswith('аэробус') or cmd.startswith('аравудус') or cmd.startswith('arrowwoods') or cmd.startswith('арабонгос'):
-            c.privmsg(self.channel, text='https://www.twitch.tv/arrowwoods')
+        if cmd.startswith('ебануть_команду'):
+            if receiver_name not in moders_white_list:
+                return
+            new_command_list = str(e.arguments[0]).split(' ')
+            print(new_command_list)
+            print(len(new_command_list))
+            if len(new_command_list) != 3:
+                c.privmsg(self.channel, text='Дурачок, команда подана неправильно. Образец !ебануть_команду имя_команды ответ_ответ вместо пробела _')
+                return
+            command_name = new_command_list[1]
+            command_answer = str(new_command_list[2]).replace("_", " ")
+            c.privmsg(self.channel, text=self.commands_controller.create_command(command_name=command_name, command_answer=command_answer))
+
+        if cmd.startswith('удали_команду'):
+            if receiver_name not in moders_white_list:
+                return
+            command = str(e.arguments[0]).split(' ')[1]
+            c.privmsg(self.channel, text=self.commands_controller.delete_command(command_name=command))
+
+        if cmd.startswith('обнови_команду'):
+            if receiver_name not in moders_white_list:
+                return
+            new_command_list = str(e.arguments[0]).split(' ')
+            if len(new_command_list) != 3:
+                c.privmsg(self.channel,
+                          text='Дурачок, команда подана неправильно. Образец !обнови_команду имя_команды новое_значение вместо пробела _')
+                return
+            command_name = new_command_list[1]
+            command_answer = str(new_command_list[2]).replace("_", " ")
+            c.privmsg(self.channel, text=self.commands_controller.update_command(command_name=command_name, new_value=command_answer))
+
+        if cmd.startswith('получить_команды'):
+            if receiver_name not in moders_white_list:
+                return
+            c.privmsg(self.channel, text=self.commands_controller.get_all_cmds())
+
+        if cmd:
+            msg = self.commands_controller.execute_command(cmd)
+            if msg:
+                c.privmsg(self.channel, text=msg)
 
 
 def main(username, client_id, token, channel):
     bot = TwitchBot(username, client_id, token, channel)
     bot.start()
+
+
+def moderator_required(receiver_name, f):
+    if receiver_name not in moders_white_list:
+        return
 
 
 if __name__ == "__main__":

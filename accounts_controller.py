@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class AccountsController:
     def __init__(self):
-        self.conn = sqlite3.connect('accounts.db')
+        self.conn = sqlite3.connect('bot.db')
         self.cursor = self.conn.cursor()
 
     def get_accounts(self):
