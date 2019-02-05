@@ -1,3 +1,4 @@
 python-twitch-client
 irc
 requests
+python-telegram-bot

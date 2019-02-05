@@ -8,11 +8,13 @@ import logging
 from accounts_controller import AccountsController
 from twitch_client import TwitchClient
 from commands_controller import CommandsController
+from telegram_notifier import TelegramNotifier
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 moders_list = ['papakarloff', 'segall', 'strangebreakers', 'wave6lol', 'bayer1by']
 moders_white_list = ['corruptedmushroom', 'segall', 'strangebreakers']
+notifier_triggers = ['corruptedmushroom', 'шурум']
 
 
 class TwitchBot(irc.bot.SingleServerIRCBot):
@@ -22,6 +24,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         self.channel = '#' + channel
         self.accounts_controller = AccountsController()
         self.commands_controller = CommandsController()
+        self.telegram_notifier = TelegramNotifier()
         self.twitch_client = TwitchClient()
         self.is_duel_on = False
 
@@ -54,6 +57,9 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
             cmd = e.arguments[0].split(' ')[0][1:]
             logger.info('Received command: {} from: {}'.format(cmd, receiver_name))
             self.do_command(e, cmd)
+        message = str(e.arguments[0]).lower()
+        if notifier_triggers[0] in message or notifier_triggers[1] in message:
+            self.telegram_notifier.send_message(message=message)
         return
 
     def do_command(self, e, cmd):
@@ -61,7 +67,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         receiver_name = e.tags[2]['value'].lower()
         # to add new command add if cmd.startswith('command'):
 
-    # TODO: Need to move all commands to another place
+        # TODO: Need to move all commands to another place
         # register to duels
         if cmd.startswith('reg'):
             if not self.is_duel_on:
@@ -186,6 +192,8 @@ def main(username, client_id, token, channel):
 def moderator_required(receiver_name, f):
     if receiver_name not in moders_white_list:
         return
+    else:
+        f()
 
 
 if __name__ == "__main__":

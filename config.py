@@ -10,3 +10,7 @@ TOKEN = ''
 CHANNEL = ''
 # twitch oauth token
 TWITCH_OAUTH_TOKEN = ''
+# telegrambot token
+TELEGRAM_BOT_TOKEN = ''
+# your telegram chat id
+TELEGRAM_CHAT_ID = ''
